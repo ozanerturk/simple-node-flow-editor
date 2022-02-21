@@ -11,7 +11,7 @@ let executionContext = ref(new ExecutionContext());
 let engine = new Engine();
 let engine2 = new Engine();
 
-let lines = [];
+let lines:LeaderLine = [];
 
 executionContext.value.addNewNode(engine);
 executionContext.value.addNewNode(engine2);
@@ -77,7 +77,7 @@ function dragging() {
       class="box"
       v-for="(node, index) in executionContext.nodes"
       :key="index"
-      :node="node"
+      :node="(node as Node)"
     />
 
     <button @click="addComponent">attach and execute</button>
