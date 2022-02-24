@@ -1,55 +1,68 @@
 <script setup lang="ts">
-import { useDraggable } from "@braks/revue-draggable";
-import { ref, PropType, defineProps, defineEmits } from "vue";
-import { Node } from "./lib/Node";
-import NodeComponentOutputHandle from "./NodeComponentOutputHandle.vue";
-import NodeComponentInputHandle from "./NodeComponentInputHandle.vue";
-import { store } from "./store"
-import { NodeInput } from "./lib/NodeInput";
+import { Draggable } from "@braks/revue-draggable";
+import { ref, PropType, defineProps, reactive } from "vue";
+import { NodeOutput } from "./lib/NodeOutput";
+import LeaderLine from "vue3-leaderline";
+import { store } from "./store";
 
 const props = defineProps({
-  node: Object as PropType<Node>,
+  output: Object as PropType<NodeOutput>,
 });
 
-function mouseEnter(e: Event, input: NodeInput) {
-  store.droppedInputId = input.id;
+const lineStart = ref()
+const lineEnd = ref()
+const controlledPosition = reactive({
+  x: 0,
+  y: 0
+
+})
+let line: LeaderLine | null = null;
+function start() {
+  line = new LeaderLine(lineStart.value, lineEnd.value)
 }
-function mouseLeave(e: Event) {
-  store.droppedInputId = ""
-  store.draggingOutputId = "";
-}
-const emit = defineEmits(['inputClicked'])
-function inputClicked(e: Event, input: NodeInput) {
-  emit('inputClicked', input)
+function onControlledDrag(e: any) {
+  if (line) {
+    line.position()
+  }
+  const { x, y } = e.data;
+  controlledPosition.x = x;
+  controlledPosition.y = y;
 }
 
-
+function stop(e: any) {
+  console.log(e.event.target)
+  if (line) {
+    line.remove()
+  }
+  const { x, y } = e.data;
+  controlledPosition.x = 0
+  controlledPosition.y = 0
+  setTimeout(() => {
+    if (store.droppedInputId) {
+      store.draggingOutputId = props.output!.id
+    } else {
+      store.draggingOutputId = ""
+    }
+  }, 2)
+}
 </script>
 
 <template>
-  <div class="box" :style="{
-    left: node!.x + 'px',
-    top: node!.y + 'px',
-  }">
-    <div class="input-titles"></div>
-
-    <div class="inputs">
-      <NodeComponentInputHandle
-        v-for="(input, i) of node?.inputs"
-        @mouseenter="(e) => mouseEnter(e, input)"
-        @mouseleave="(e) => mouseLeave(e)"
-        @click="(e) => inputClicked(e, input)"
-        :input="input"
-      ></NodeComponentInputHandle>
-    </div>
-    <div class="center">{{ node?.name }}</div>
-    <div class="outputs">
-      <NodeComponentOutputHandle
-        v-for="(output, i) of node?.outputs"
-        class="dont-drag-me-father output"
-        v-bind:id="`node-${node?.id}-output-${output.id}`"
-        :output="output"
-      ></NodeComponentOutputHandle>
+  <div class="hello">
+    <div class="output-droppable" ref="lineStart"></div>
+    <Draggable
+      @move="onControlledDrag"
+      :enable-transform-fix="true"
+      :enable-user-select-hack="true"
+      :position="controlledPosition"
+      @start="start"
+      @stop="stop"
+    >
+      <div class="output-droppable" style="opacity:0; " ref="lineEnd"></div>
+    </Draggable>
+    <div class="output-name">
+      {{ output!.name }}
+      <span v-if="output!.value.hasValue">({{ output!.getValue() }})</span>
     </div>
   </div>
 </template>

@@ -3,19 +3,20 @@ import { Node } from "./Node";
 import { Value } from "./Value";
 
 export class NodeInput {
- 
-  private name: string;
+
+
+  public name: string;
   private required: boolean = true;
   private default: any;
   private value: Value = new Value(null);
-  private node: Node;
+  public node: Node;
   public readonly id: string;
 
 
   constructor (node: Node, name: string) {
     this.node = node;
     this.name = name;
-    this.id =generateGuid(); 
+    this.id = generateGuid();
   }
 
   hasValue() {

@@ -1,55 +1,18 @@
 <script setup lang="ts">
-import { useDraggable } from "@braks/revue-draggable";
-import { ref, PropType, defineProps, defineEmits } from "vue";
-import { Node } from "./lib/Node";
-import NodeComponentOutputHandle from "./NodeComponentOutputHandle.vue";
-import NodeComponentInputHandle from "./NodeComponentInputHandle.vue";
-import { store } from "./store"
+import { PropType, defineProps } from "vue";
 import { NodeInput } from "./lib/NodeInput";
 
 const props = defineProps({
-  node: Object as PropType<Node>,
+  input: Object as PropType<NodeInput>,
 });
-
-function mouseEnter(e: Event, input: NodeInput) {
-  store.droppedInputId = input.id;
-}
-function mouseLeave(e: Event) {
-  store.droppedInputId = ""
-  store.draggingOutputId = "";
-}
-const emit = defineEmits(['inputClicked'])
-function inputClicked(e: Event, input: NodeInput) {
-  emit('inputClicked', input)
-}
-
 
 </script>
 
 <template>
-  <div class="box" :style="{
-    left: node!.x + 'px',
-    top: node!.y + 'px',
-  }">
-    <div class="input-titles"></div>
-
-    <div class="inputs">
-      <NodeComponentInputHandle
-        v-for="(input, i) of node?.inputs"
-        @mouseenter="(e) => mouseEnter(e, input)"
-        @mouseleave="(e) => mouseLeave(e)"
-        @click="(e) => inputClicked(e, input)"
-        :input="input"
-      ></NodeComponentInputHandle>
-    </div>
-    <div class="center">{{ node?.name }}</div>
-    <div class="outputs">
-      <NodeComponentOutputHandle
-        v-for="(output, i) of node?.outputs"
-        class="dont-drag-me-father output"
-        v-bind:id="`node-${node?.id}-output-${output.id}`"
-        :output="output"
-      ></NodeComponentOutputHandle>
+  <div  v-bind:id="`node-${input?.node.id}-input-${input?.id}`" class="input">
+    <div class="input-name">
+      {{ input?.name }}({{ input?.getValue() }})
+      <div  class="dont-drag-me-father input-draggable output-drop-target "></div>
     </div>
   </div>
 </template>
@@ -65,9 +28,7 @@ function inputClicked(e: Event, input: NodeInput) {
   margin-bottom: 20px;
   line-height: 20px;
 }
-.invisible {
-  opacity: 0.5;
-}
+
 .output {
   position: relative;
   direction: ltr;
