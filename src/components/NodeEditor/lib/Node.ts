@@ -5,7 +5,7 @@ export interface INode {
   name: String;
   inputs: NodeInput[],
   outputs: NodeOutput[],
-  onExecuted: () => void;
+  onExecuted: (nodeOutput: NodeOutput) => void;
 }
 
 
@@ -22,14 +22,14 @@ export abstract class Node implements INode {
     this.name = name
     this.id = generateGuid();
   }
-  public onExecuted(nodeOutput:NodeOutput) {
 
-  };
 
   public execution() {
 
   }
+  public onExecuted(nodeOutput: NodeOutput) {
 
+  };
   public canExecute(): boolean {
     console.log(this.inputs.length, this.inputs.map(x => x.hasValue()));
     return this.inputs.every(input => input.hasValue());
@@ -38,7 +38,7 @@ export abstract class Node implements INode {
   public tryExecution() {
     if (this.canExecute()) {
       this.execution();
-      this.outputs.forEach(n=>{
+      this.outputs.forEach(n => {
         this.onExecuted(n);
       })
     } else {

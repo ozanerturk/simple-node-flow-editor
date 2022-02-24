@@ -17,9 +17,11 @@ let engine = new Engine();
 engine.powerInput.setValue(100);
 
 let beaing = new Bearing();
+let beaing2 = new Bearing();
 
 ex.addNewNode(engine);
 ex.addNewNode(beaing);
+ex.addNewNode(beaing2);
 
 
 let nodeEngine = ref(ex)
