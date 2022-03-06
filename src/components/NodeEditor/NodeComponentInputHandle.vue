@@ -94,14 +94,6 @@ const props = defineProps({
   background-color: rgb(255, 16, 16);
   width: 20px;
 }
-.box {
-  display: flex;
-  flex-direction: columns;
-  background-color: #304455;
-  width: 200px;
-  height: 200px;
-  margin: 10px;
-}
 a {
   color: #42b983;
 }

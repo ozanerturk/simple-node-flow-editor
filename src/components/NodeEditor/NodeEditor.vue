@@ -11,31 +11,28 @@ import { NodeInput } from "./lib/NodeInput";
 import { NodeOutput } from "./lib/NodeOutput";
 import { Connection } from "./lib/Connection";
 
-let ex = new NodeEngine();
+// let ex = new NodeEngine();
 
-let engine = new Engine();
-engine.powerInput.setValue(100);
+// let engine = new Engine();
+// engine.powerInput.setValue(100);
 
-let beaing = new Bearing();
-let beaing2 = new Bearing();
+// let beaing = new Bearing();
+// let beaing2 = new Bearing();
 
-ex.addNewNode(engine);
-ex.addNewNode(beaing);
-ex.addNewNode(beaing2);
-
-
+// ex.addNewNode(engine);
+// ex.addNewNode(beaing);
+// ex.addNewNode(beaing2);
+let text = `{ "nodes": [ { "x": -10, "y": 140, "id": "C45BC9DF-16FF-6381-BA7A-79A148106525", "name": "Engine", "inputs": [ { "id": "A2864FCF-B5CB-9547-AC94-C3F0655CD884", "name": "power", "value": 100, "hasValue": true, "nodeId": "C45BC9DF-16FF-6381-BA7A-79A148106525" } ], "outputs": [ { "id": "83A3236B-1EE3-5A0D-6436-342E59BAA28F", "name": "power", "value": 200, "hasValue": true, "nodeId": "C45BC9DF-16FF-6381-BA7A-79A148106525" } ] }, { "x": 360, "y": 190, "id": "DC9F95AF-E096-537E-3557-8EBB7E8246C8", "name": "Bearing", "inputs": [ { "id": "FB689301-3045-81C8-E550-E645F493EDAA", "name": "speed", "value": 200, "hasValue": true, "nodeId": "DC9F95AF-E096-537E-3557-8EBB7E8246C8" } ], "outputs": [ { "id": "CB644F66-AB2C-0FE7-5525-F17623D72CE3", "name": "bpfo", "value": 20, "hasValue": true, "nodeId": "DC9F95AF-E096-537E-3557-8EBB7E8246C8" }, { "id": "358F07E4-A0CF-19C3-6470-B081A7B54267", "name": "bfio", "value": 13.333333333333334, "hasValue": true, "nodeId": "DC9F95AF-E096-537E-3557-8EBB7E8246C8" } ] }, { "x": 720, "y": 100, "id": "CFE07C6E-8878-F002-A9E0-CE123525BA81", "name": "Bearing", "inputs": [ { "id": "C0DF4EC3-DD7E-4F5E-5DF5-0546A2A36E54", "name": "speed", "value": 20, "hasValue": true, "nodeId": "CFE07C6E-8878-F002-A9E0-CE123525BA81" } ], "outputs": [ { "id": "025A4D4C-70BB-C017-0157-974BFF59CB1A", "name": "bpfo", "value": 2, "hasValue": true, "nodeId": "CFE07C6E-8878-F002-A9E0-CE123525BA81" }, { "id": "16A78A36-5C6A-9732-130A-FDE5F329A7EF", "name": "bfio", "value": 1.3333333333333333, "hasValue": true, "nodeId": "CFE07C6E-8878-F002-A9E0-CE123525BA81" } ] } ], "connections": [ [ "CB644F66-AB2C-0FE7-5525-F17623D72CE3", "C0DF4EC3-DD7E-4F5E-5DF5-0546A2A36E54" ], [ "83A3236B-1EE3-5A0D-6436-342E59BAA28F", "FB689301-3045-81C8-E550-E645F493EDAA" ] ] }`
+let str: string = localStorage.getItem("engine") || ""
+console.log(str)
+let ex = NodeEngine.parse(JSON.parse(str))
 let nodeEngine = ref(ex)
 
 let lines: LeaderLine[] = [];
 
-watch(
-  () => store.draggingOutputId,
-  (neww, old) => {
-    nodeEngine.value.attachNode(store.draggingOutputId, store.droppedInputId);
-    initLines()
 
-  }
-)
+
+
 function addComponent() {
   let beaing = new Bearing();
 
@@ -73,22 +70,51 @@ function initLines() {
     drawLines(connection.from, connection.to);
   }
 }
+let initX = 0, initY = 0, firstX = 0, firstY = 0;
+let steps = 0;
 
-function dragging(e: CustomEvent, node: Node) {
-  node.x = e.detail.data.x
-  node.y = e.detail.data.y
-  lines.forEach(l => {
-    setTimeout(() => {
+
+function dragIt(element: HTMLElement, event: MouseEvent, node: Node) {
+  {
+    steps++;
+    node.x = initX + event.pageX - firstX;
+    node.y = initY + event.pageY - firstY;
+    lines.forEach(l=>{
       l.position()
-    }, 2)
-  })
+    })
+  }
 }
 
+function mousedown(event: MouseEvent, node: Node) {
+  let element = event.target as HTMLElement;
+  event.preventDefault();
+  initX = node.x;
+  initY = node.y;
+  firstX = event.pageX;
+  firstY = event.pageY;
+  console.log(node.x, initX, firstX)
+
+
+  const dragListener = function (this: any, event: MouseEvent) {
+    return dragIt(element, event, node);
+  }
+  element.addEventListener('mousemove', dragListener, false);
+
+  window.addEventListener('mouseup', function () {
+    console.log("234")
+    localStorage.setItem("engine", JSON.stringify(nodeEngine.value.serialize()))
+    element.removeEventListener('mousemove', dragListener, false);
+  }, false);
+}
+
+
+initLines()
 
 
 </script>
 
 <template>
+  <div>{{ nodeEngine.serialize() }}</div>
   <button @click="execute">execute</button>
   <div style="margin-left:100px">
     <div style="position:absolute; top:10px; height:100px">
@@ -98,10 +124,9 @@ function dragging(e: CustomEvent, node: Node) {
     </div>
     <div style="width:100%; height:800px;background-color:grey; position: relative;">
       <NodeComponent
-        v-draggable="{ grid: [10, 10], cancel: '.dont-drag-me-father' }"
-        @move="(e: CustomEvent) => dragging(e, node as Node)"
         @inputClicked="inputClicked"
-        style="position:absolute; left:0;top:0"
+        @mousedown="(e) => mousedown(e, node as Node)"
+        :style="{ 'position': 'absolute', 'left': node.x + 'px', 'top': node.y + 'px' }"
         v-for="(node, index) in nodeEngine.nodes"
         :key="index"
         :node="(node as Node)"

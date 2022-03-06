@@ -1,21 +1,18 @@
-import { Node } from "./Node";
+import { INode, Node } from "./Node";
 import { Connection } from "./Connection";
 import { NodeInput } from "./NodeInput";
 import nodesTypes from "../nodes";
 import { NodeOutput } from "./NodeOutput";
 
-function resolveType(opts: any) {
-  console.log("opts", [opts.object[opts.property]])
+function resolveType(nodeJson: any) {
   for (let node_type of nodesTypes) {
-    if (node_type.name == opts.object[opts.property].name) {
+    if (node_type.name == nodeJson.name) {
       return node_type;
     }
   }
   return Node;
 }
 export class NodeEngine {
-
-
 
   nodes: Node[] = [];
   connections: Connection[] = [];
@@ -34,6 +31,45 @@ export class NodeEngine {
   }
   execute() {
     this.nodes.forEach(x => x.tryExecution())
+  }
+
+  serialize() {
+    return {
+      nodes: this.nodes.map(x => x.serialize()),
+      connections: this.connections.map(x => [x.from.id, x.to.id])
+    }
+  }
+
+  static parse(json: any): NodeEngine {
+    let engine = new NodeEngine();
+    let nodes = json.nodes.map((n: any) => {
+      console.log(n.id)
+      let node = new (resolveType(n))(n.name);
+      node.setId(String(n.id))
+      node.updateCoordinates(n.x, n.y);
+      node.outputs.forEach((o, i) => {
+        o.name = n.outputs[i].name
+        o.id = n.outputs[i].id
+        o.value.setValue(n.outputs[i].value)
+      })
+      node.inputs.forEach((o, i) => {
+        o.name = n.inputs[i].name
+        o.id = n.inputs[i].id
+        o.value.setValue(n.inputs[i].value)
+      })
+      return node;
+    })as Node[];
+
+    let connections = json.connections.map((x: any) => {
+      let [from, to] = x;
+      let nodeOutput = nodes.flatMap(n => n.outputs).find(x=>x.id == from);
+      let nodeInput = nodes.flatMap(n => n.inputs).find(x=>x.id == to);
+      return { from: nodeOutput, to: nodeInput } as Connection;
+    })
+    engine.nodes = nodes;
+    engine.connections = connections;
+
+    return engine;
   }
 
 
@@ -56,7 +92,7 @@ export class NodeEngine {
     if (output && input) {
 
       //is connected to itself
-   
+
       //remove old connection
       //check if output node recursiveliy connects to itself
       if (this.isAttachmentRecursive(output, input)) {
@@ -72,7 +108,6 @@ export class NodeEngine {
   }
 
   isAttachmentRecursive(from: NodeOutput, to: NodeInput) {
-    let nodes: Node[] = [to.node]
     let traveler_nodes = [to.node]
     while (1) {
       //get travelers connected nodes
@@ -89,7 +124,7 @@ export class NodeEngine {
       }
       //get  travelers connected node ids
       traveler_nodes = travelers_connections.map(c => c.to.node);
-      if(traveler_nodes.map(x => x.id).includes(from.node.id)){
+      if (traveler_nodes.map(x => x.id).includes(from.node.id)) {
         return true;
       }
     }

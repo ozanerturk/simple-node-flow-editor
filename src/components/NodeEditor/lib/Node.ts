@@ -7,26 +7,40 @@ export interface INode {
   outputs: NodeOutput[],
   onExecuted: (nodeOutput: NodeOutput) => void;
 }
-
-
-export abstract class Node implements INode {
+export class Node implements INode {
+  serialize(): any {
+    return {
+      x: this.x,
+      y: this.y,
+      initialX:this.x,
+      initialY: this.y,
+      id: this.id,
+      name: this.name,
+      inputs: this.inputs.map(x => x.serialize()),
+      outputs: this.outputs.map(x => x.serialize())
+    }
+  }
 
   public inputs: NodeInput[] = [];
   public outputs: NodeOutput[] = [];
-  public name: String;
+  public name: string;
   public x: number = 0;
   public y: number = 0;
   public id: string;
 
-  constructor (name: String) {
+  constructor (name: string) {
     this.name = name
     this.id = generateGuid();
   }
 
-
+  public setId(id: string) {
+    this.id = id
+  }
+  //to be overridden
   public execution() {
 
   }
+  //to be overridden
   public onExecuted(nodeOutput: NodeOutput) {
 
   };
@@ -46,6 +60,8 @@ export abstract class Node implements INode {
     }
   }
   public updateCoordinates(x: number, y: number) {
+    this.initialX = x;
+    this.initialY = y;
     this.x = x;
     this.y = y;
   }

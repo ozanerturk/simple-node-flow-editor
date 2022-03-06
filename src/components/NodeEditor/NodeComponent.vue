@@ -27,10 +27,7 @@ function inputClicked(e: Event, input: NodeInput) {
 </script>
 
 <template>
-  <div class="box" :style="{
-    left: node!.x + 'px',
-    top: node!.y + 'px',
-  }">
+  <div class="box">
     <div class="input-titles"></div>
 
     <div class="inputs">
@@ -135,7 +132,7 @@ function inputClicked(e: Event, input: NodeInput) {
 }
 .box {
   display: flex;
-  flex-direction: columns;
+  flex-direction: row;
   background-color: #304455;
   width: 200px;
   height: 200px;
