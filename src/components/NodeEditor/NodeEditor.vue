@@ -30,7 +30,14 @@ let nodeEngine = ref(ex)
 
 let lines: LeaderLine[] = [];
 
+watch(
+  () => store.draggingOutputId,
+  (neww, old) => {
+    nodeEngine.value.attachNode(store.draggingOutputId, store.droppedInputId);
+    initLines()
 
+  }
+)
 
 
 function addComponent() {
@@ -88,6 +95,9 @@ function dragIt(element: HTMLElement, event: MouseEvent, node: Node) {
 function mousedown(event: MouseEvent, node: Node) {
   let element = event.target as HTMLElement;
   event.preventDefault();
+  if(element.classList.contains("output-droppable")){
+    return;
+  }
   initX = node.x;
   initY = node.y;
   firstX = event.pageX;
