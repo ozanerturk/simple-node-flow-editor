@@ -17,12 +17,14 @@ export class Node implements INode {
       id: this.id,
       name: this.name,
       inputs: this.inputs.map(x => x.serialize()),
-      outputs: this.outputs.map(x => x.serialize())
+      outputs: this.outputs.map(x => x.serialize()),
+      parameters: this.parameters
     }
   }
 
   public inputs: NodeInput[] = [];
   public outputs: NodeOutput[] = [];
+  public parameters: Parameter[]= [];
   public name: string;
   public x: number = 0;
   public y: number = 0;
@@ -60,8 +62,6 @@ export class Node implements INode {
     }
   }
   public updateCoordinates(x: number, y: number) {
-    this.initialX = x;
-    this.initialY = y;
     this.x = x;
     this.y = y;
   }

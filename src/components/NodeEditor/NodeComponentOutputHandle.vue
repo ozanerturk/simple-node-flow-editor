@@ -18,7 +18,7 @@ const controlledPosition = reactive({
 })
 let line: LeaderLine | null = null;
 function start() {
-  line = new LeaderLine(lineStart.value, lineEnd.value)
+  line = new LeaderLine(lineStart.value, lineEnd.value,{ dash: { animation: true }, size: 2 })
 }
 function onControlledDrag(e: any) {
   if (line) {
@@ -58,9 +58,9 @@ function stop(e: any) {
       @start="start"
       @stop="stop"
     >
-      <div class="output-droppable" style="opacity:0; " ref="lineEnd"></div>
+      <div class="output-droppable" style="position:absolute;opacity:0; " ref="lineEnd"></div>
     </Draggable>
-    <div class="output-name">
+    <div class="output-name" v-if="store.selectedNodeId == output!.node.id">
       {{ output!.name }}
       <span v-if="output!.value.hasValue">({{ output!.getValue() }})</span>
     </div>
@@ -74,21 +74,16 @@ function stop(e: any) {
   justify-content: center;
 }
 .output-name {
-  margin-left: 24px;
-  margin-bottom: 20px;
-  line-height: 20px;
+  text-align: left;
+  position:absolute;
+  z-index: 99;
+  left:20px;
+  top:-4px;
+  padding:2px;
+  background-color: white;
 }
 .invisible {
   opacity: 0.5;
-}
-.output {
-  position: relative;
-  direction: ltr;
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: black;
 }
 .output-droppable {
   position: absolute;
@@ -97,14 +92,10 @@ function stop(e: any) {
   direction: ltr;
   display: block;
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background-color: black;
-}
-.input-name {
-  margin-right: 24px;
-  line-height: 20px;
 }
 .input-draggable {
   position: absolute !important;
@@ -113,38 +104,10 @@ function stop(e: any) {
   direction: rtl;
   display: block;
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background-color: black;
-}
-.input {
-  direction: rtl;
-  display: block;
-  position: relative;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: black;
-}
-.inputs {
-  justify-content: space-evenly;
-  display: flex;
-  flex-direction: column;
-  background-color: green;
-  width: 20px;
-}
-.center {
-  flex: 1;
-  background-color: yellow;
-}
-.outputs {
-  position: relative;
-  justify-content: space-evenly;
-  display: flex;
-  flex-direction: column;
-  background-color: rgb(255, 16, 16);
-  width: 20px;
 }
 a {
   color: #42b983;

@@ -8,14 +8,20 @@ export class Engine extends Node {
   powerInput = new NodeInput(this, "power");
   powerOutput = new NodeOutput(this, "power");
 
+  tolerance: Parameter = {
+    key: "tolerance",
+    value: "0.1"
+  }
+
   constructor () {
     super("Engine");
     this.inputs.push(this.powerInput);
     this.outputs.push(this.powerOutput);
+    this.parameters.push(this.tolerance)
   }
 
   public override execution(): void {
-    let v = this.powerInput.getValue() * 2;
+    let v = Number(this.powerInput.getValue()) * 2 + Number(this.tolerance.value);
     this.powerOutput.setValue(v);
     console.log("power output set to", v);
   }

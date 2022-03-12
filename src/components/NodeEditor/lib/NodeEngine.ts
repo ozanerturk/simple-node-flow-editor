@@ -22,6 +22,7 @@ export class NodeEngine {
       //get connections
       let connections = this.connections.filter(x => x.from.id == nodeOutput.id);
       //set connection input value and execute related node 
+      console.log("conns", connections, "connections")
       connections.forEach(x => {
         x.to.setValue(nodeOutput.getValue());
         x.to.node.tryExecution();
@@ -43,7 +44,7 @@ export class NodeEngine {
   static parse(json: any): NodeEngine {
     let engine = new NodeEngine();
     let nodes = json.nodes.map((n: any) => {
-      console.log(n.id)
+      console.log(n.parameters[0])
       let node = new (resolveType(n))(n.name);
       node.setId(String(n.id))
       node.updateCoordinates(n.x, n.y);
@@ -57,23 +58,33 @@ export class NodeEngine {
         o.id = n.inputs[i].id
         o.value.setValue(n.inputs[i].value)
       })
+      node.parameters.forEach((o, i) => {
+        o.key = n.parameters[i].key
+        o.value = n.parameters[i].value
+      })
       return node;
-    })as Node[];
+    }) as Node[];
 
     let connections = json.connections.map((x: any) => {
       let [from, to] = x;
-      let nodeOutput = nodes.flatMap(n => n.outputs).find(x=>x.id == from);
-      let nodeInput = nodes.flatMap(n => n.inputs).find(x=>x.id == to);
+      let nodeOutput = nodes.flatMap(n => n.outputs).find(x => x.id == from);
+      let nodeInput = nodes.flatMap(n => n.inputs).find(x => x.id == to);
       return { from: nodeOutput, to: nodeInput } as Connection;
     })
-    engine.nodes = nodes;
+    nodes.forEach(b => {
+
+      engine.addNewNode(b);
+    })
     engine.connections = connections;
 
     return engine;
   }
 
 
-
+  removeNode(node: Node) {
+    this.nodes = this.nodes.filter(x => x.id != node.id)
+    this.connections = this.connections.filter(x => x.from.node.id != node.id && x.to.node.id != node.id)
+  }
   getInputById(id: string): NodeInput {
     return this.nodes.flatMap(x => x.inputs)
       .find(x => x.id == id) as NodeInput;

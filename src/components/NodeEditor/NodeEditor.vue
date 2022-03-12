@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { NodeEngine } from "./lib/NodeEngine";
-import { Engine } from "./nodes/Engine";
+import nodesTypes from "./nodes";
 import { Bearing } from "./nodes/Bearing";
 import { Node } from "./lib/Node";
 import NodeComponent from "./NodeComponent.vue";
@@ -22,12 +22,10 @@ import { Connection } from "./lib/Connection";
 // ex.addNewNode(engine);
 // ex.addNewNode(beaing);
 // ex.addNewNode(beaing2);
-let text = `{ "nodes": [ { "x": -10, "y": 140, "id": "C45BC9DF-16FF-6381-BA7A-79A148106525", "name": "Engine", "inputs": [ { "id": "A2864FCF-B5CB-9547-AC94-C3F0655CD884", "name": "power", "value": 100, "hasValue": true, "nodeId": "C45BC9DF-16FF-6381-BA7A-79A148106525" } ], "outputs": [ { "id": "83A3236B-1EE3-5A0D-6436-342E59BAA28F", "name": "power", "value": 200, "hasValue": true, "nodeId": "C45BC9DF-16FF-6381-BA7A-79A148106525" } ] }, { "x": 360, "y": 190, "id": "DC9F95AF-E096-537E-3557-8EBB7E8246C8", "name": "Bearing", "inputs": [ { "id": "FB689301-3045-81C8-E550-E645F493EDAA", "name": "speed", "value": 200, "hasValue": true, "nodeId": "DC9F95AF-E096-537E-3557-8EBB7E8246C8" } ], "outputs": [ { "id": "CB644F66-AB2C-0FE7-5525-F17623D72CE3", "name": "bpfo", "value": 20, "hasValue": true, "nodeId": "DC9F95AF-E096-537E-3557-8EBB7E8246C8" }, { "id": "358F07E4-A0CF-19C3-6470-B081A7B54267", "name": "bfio", "value": 13.333333333333334, "hasValue": true, "nodeId": "DC9F95AF-E096-537E-3557-8EBB7E8246C8" } ] }, { "x": 720, "y": 100, "id": "CFE07C6E-8878-F002-A9E0-CE123525BA81", "name": "Bearing", "inputs": [ { "id": "C0DF4EC3-DD7E-4F5E-5DF5-0546A2A36E54", "name": "speed", "value": 20, "hasValue": true, "nodeId": "CFE07C6E-8878-F002-A9E0-CE123525BA81" } ], "outputs": [ { "id": "025A4D4C-70BB-C017-0157-974BFF59CB1A", "name": "bpfo", "value": 2, "hasValue": true, "nodeId": "CFE07C6E-8878-F002-A9E0-CE123525BA81" }, { "id": "16A78A36-5C6A-9732-130A-FDE5F329A7EF", "name": "bfio", "value": 1.3333333333333333, "hasValue": true, "nodeId": "CFE07C6E-8878-F002-A9E0-CE123525BA81" } ] } ], "connections": [ [ "CB644F66-AB2C-0FE7-5525-F17623D72CE3", "C0DF4EC3-DD7E-4F5E-5DF5-0546A2A36E54" ], [ "83A3236B-1EE3-5A0D-6436-342E59BAA28F", "FB689301-3045-81C8-E550-E645F493EDAA" ] ] }`
-let str: string = localStorage.getItem("engine") || ""
-console.log(str)
-let ex = NodeEngine.parse(JSON.parse(str))
-let nodeEngine = ref(ex)
 
+let nodeEngine = ref(new NodeEngine());
+let selectedNode = ref<Node>();
+let dialogShow = ref(false);
 let lines: LeaderLine[] = [];
 
 watch(
@@ -39,10 +37,48 @@ watch(
   }
 )
 
+function save() {
+  let data = JSON.stringify(nodeEngine.value.serialize())
+  localStorage.setItem("engine", data)
+  downloadToFile(data, "engine.json", "text/plain")
+}
 
-function addComponent() {
-  let beaing = new Bearing();
+function loadFromStorage() {
+  let engine = localStorage.getItem("engine")
+  if (engine) {
+    nodeEngine.value = NodeEngine.parse(JSON.parse(engine))
+    initLines()
+  }
+}
 
+function load(e: any) {
+  let file = e.target.files[0]
+  if (file) {
+    var reader = new FileReader();
+
+    reader.onload = function (evt: any) {
+      if (evt.target.readyState != 2) return;
+      if (evt.target.error) {
+        alert('Error while reading file');
+        return;
+      }
+      try {
+        let j = JSON.parse(evt.target.result)
+        nodeEngine.value = NodeEngine.parse(j)
+        initLines()
+      } catch (e) {
+        alert('Error while parsing file')
+      }
+    };
+
+    reader.readAsText(file, "UTF-8");
+  } else {
+  }
+}
+
+function addComponent(nodeType: any) {
+  let newNode = new nodeType();
+  nodeEngine.value.addNewNode(newNode);
   initLines();
 }
 function execute() {
@@ -56,7 +92,8 @@ function drawLines(output: NodeOutput, input: NodeInput) {
   setTimeout(() => {
     let l = new LeaderLine(
       document.getElementById(start) as HTMLElement,
-      document.getElementById(end) as HTMLElement
+      document.getElementById(end) as HTMLElement,
+      { dash: { animation: true }, size: 2 }
     )
     lines.push(l)
   }, 1)
@@ -66,7 +103,10 @@ function inputClicked(input: NodeInput) {
   nodeEngine.value.detachInput(input);
   initLines()
 }
-
+function removed(node: Node) {
+  nodeEngine.value.removeNode(node)
+  initLines()
+}
 function initLines() {
   lines.forEach(l => {
     l.remove()
@@ -80,22 +120,36 @@ function initLines() {
 let initX = 0, initY = 0, firstX = 0, firstY = 0;
 let steps = 0;
 
-
+function container_clicked(e: Event) {
+  if (e.target === e.currentTarget) {
+    console.log("clicked on container")
+    store.selectedNodeId = "";
+  }
+}
 function dragIt(element: HTMLElement, event: MouseEvent, node: Node) {
   {
     steps++;
-    node.x = initX + event.pageX - firstX;
-    node.y = initY + event.pageY - firstY;
-    lines.forEach(l=>{
+    let newX = initX + event.pageX - firstX
+    let newY = initY + event.pageY - firstY
+    if (newX < 0) newX = 0;
+    if (newY < 0) newY = 0;
+    node.x = newX;
+    node.y = newY;
+    // node.x = initX + event.pageX - firstX;
+    // node.y = initY + event.pageY - firstY;
+    lines.forEach(l => {
       l.position()
     })
   }
 }
 
 function mousedown(event: MouseEvent, node: Node) {
+  selectedNode.value = node;
   let element = event.target as HTMLElement;
-  event.preventDefault();
-  if(element.classList.contains("output-droppable")){
+  if([...(element.classList as any)].some(x=>x.startsWith("dialog"))){
+    return
+  }
+  if (element.classList.contains("output-droppable") || element.classList.contains("dialog")) {
     return;
   }
   initX = node.x;
@@ -111,12 +165,20 @@ function mousedown(event: MouseEvent, node: Node) {
   element.addEventListener('mousemove', dragListener, false);
 
   window.addEventListener('mouseup', function () {
-    console.log("234")
-    localStorage.setItem("engine", JSON.stringify(nodeEngine.value.serialize()))
     element.removeEventListener('mousemove', dragListener, false);
   }, false);
 }
 
+const downloadToFile = (content: string, filename: string, contentType: string) => {
+  const a = document.createElement('a');
+  const file = new Blob([content], { type: contentType });
+
+  a.href = URL.createObjectURL(file);
+  a.download = filename;
+  a.click();
+
+  URL.revokeObjectURL(a.href);
+};
 
 initLines()
 
@@ -124,23 +186,38 @@ initLines()
 </script>
 
 <template>
-  <div>{{ nodeEngine.serialize() }}</div>
+  <button @click="save">save</button>
+  <button @click="loadFromStorage">loadFromStorage</button>
+  <label>load</label>
+  <input type="file" @change="(e) => load(e)" />
   <button @click="execute">execute</button>
-  <div style="margin-left:100px">
-    <div style="position:absolute; top:10px; height:100px">
-      {{ store.droppedInputId }}
-      <br />
-      {{ store.draggingOutputId }}
-    </div>
-    <div style="width:100%; height:800px;background-color:grey; position: relative;">
-      <NodeComponent
-        @inputClicked="inputClicked"
-        @mousedown="(e) => mousedown(e, node as Node)"
-        :style="{ 'position': 'absolute', 'left': node.x + 'px', 'top': node.y + 'px' }"
-        v-for="(node, index) in nodeEngine.nodes"
-        :key="index"
-        :node="(node as Node)"
-      />
+  
+  <div style="margin-left:10px">
+    <div style="display:flex;width:100%; height:800px;background-color:grey; position: relative;">
+      <div class="toolbox" style="border:1px solid black; display:flex;flex-direction: column;">
+        <button
+          style="margin-left:10px;margin-right:10px; margin-top:10px"
+          v-for="(nodeType, index) in nodesTypes"
+          :key="index"
+          @click="() => addComponent(nodeType)"
+        >{{ nodeType.name }}</button>
+      </div>
+      <div
+        class="editor-container"
+        style="flex:1;position:relative"
+        v-on:click="(e) => { container_clicked(e) }"
+      >
+        <NodeComponent
+          @removed="removed"
+          @inputClicked="inputClicked"
+          v-on:mousedown="(e) => { mousedown(e, node as Node); store.selectedNodeId = node.id; }"
+          v-bind:class="{ 'selected': (store.selectedNodeId === node.id) }"
+          :style="{ 'position': 'absolute', 'left': node.x + 'px', 'top': node.y + 'px' }"
+          v-for="(node, index) in nodeEngine.nodes"
+          :key="index"
+          :node="(node as Node)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -153,6 +230,9 @@ a {
 label {
   margin: 0 0.5em;
   font-weight: bold;
+}
+.selected {
+  outline: 5px solid #42b983;
 }
 .target {
   position: absolute;

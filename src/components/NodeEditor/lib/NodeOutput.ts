@@ -27,6 +27,6 @@ export class NodeOutput {
   }
   setValue(value: any) {
     this.value.setValue(value);
-    console.log("attached inputs notified");
+    console.log("attached inputs notified",value);
   }
 }

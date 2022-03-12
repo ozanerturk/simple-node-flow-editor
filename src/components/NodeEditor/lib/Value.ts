@@ -7,6 +7,8 @@ export class Value {
   }
 
   setValue(value: any) {
+    console.log(value)
+
     this.value = value;
     this.hasValue = true;
   }
