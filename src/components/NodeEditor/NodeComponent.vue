@@ -27,6 +27,25 @@ function nodeRemoveClicked(node: Node) {
   emit('removed', node)
 }
 
+function updateNodeImage(e: Event, node: Node) {
+  const target = e.target as HTMLInputElement;
+  if (target && target.files) {
+    const file = target.files[0];
+    //read file as blob image resource convert to string
+    const reader = new FileReader();
+    reader.onload = function (evt: any) {
+      if (evt.target.readyState != 2) return;
+      node.image = evt.target.result;
+    }
+    reader.readAsDataURL(file);
+
+  }
+
+}
+
+function removeImage(node:Node){
+  node.image = ""
+}
 
 let dialogShow = ref(false)
 
@@ -34,7 +53,10 @@ let dialogShow = ref(false)
 </script>
 
 <template>
-  <div class="box">
+  <div class="box" v-bind:style="{
+    
+    'background-image': (node!.image ? `url(${node!.image})` : 'none')
+  }">
     <div style="position:absolute" v-if="dialogShow">
       <div class="dialog">
         <div class="dialog-header">
@@ -47,7 +69,7 @@ let dialogShow = ref(false)
             <div v-for="(param, index) in node!.parameters">
               <div class="dialog-parameter">
                 <div class="dialog-parameter-name">{{ param.key }}</div>
-                <input :value="param.value" @change="(e:any) => { param.value = e.target.value }" />
+                <input :value="param.value" @change="(e: any) => { param.value = e.target.value }" />
               </div>
             </div>
           </div>
@@ -58,7 +80,10 @@ let dialogShow = ref(false)
             <div v-for="input in node!.inputs" class="dialog-input">
               <div class="dialog-input-name">
                 <label>{{ input.name }}</label>
-                <input :value="input.value.value" @change="(e:any) => { input.setValue(e.target.value)}" />
+                <input
+                  :value="input.value.value"
+                  @change="(e: any) => { input.setValue(e.target.value) }"
+                />
               </div>
             </div>
           </div>
@@ -86,7 +111,11 @@ let dialogShow = ref(false)
       v-if="node!.id == store.selectedNodeId"
       style="position:absolute;right:0px;top:-20px;width:20px;height:20px;padding:0px"
     >X</button>
-    <div class="inputs">
+    <div class="inputs"
+    v-bind:style="{
+      'background-color': node!.image ? 'none' : 'green'
+    }"
+    >
       <NodeComponentInputHandle
         v-for="(input, i) of node?.inputs"
         @mouseenter="(e) => mouseEnter(e, input)"
@@ -95,11 +124,23 @@ let dialogShow = ref(false)
         :input="input"
       ></NodeComponentInputHandle>
     </div>
-    <div class="center">{{ node?.name }}</div>
-    <div class="outputs">
+    <div class="center"
+   v-bind:style="{
+      'background-color': node!.image ? 'none' : 'yellow'
+    }"    
+    >
+    <span v-if="!(node!.image)">
+    {{ node?.name }}
+    </span>
+    </div>
+    <div class="outputs"
+       v-bind:style="{
+      'background-color': node!.image ? 'none' : 'red'
+    }"
+    >
       <NodeComponentOutputHandle
         v-for="(output, i) of node?.outputs"
-        class="dont-drag-me-father output"
+        class="s output"
         v-bind:id="`node-${node?.id}-output-${output.id}`"
         :output="output"
       ></NodeComponentOutputHandle>
@@ -108,11 +149,7 @@ let dialogShow = ref(false)
 </template>
 
 <style scoped>
-.center {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
+
 
 .invisible {
   opacity: 0.5;
@@ -173,26 +210,28 @@ let dialogShow = ref(false)
   justify-content: space-evenly;
   display: flex;
   flex-direction: column;
-  background-color: green;
   width: 10px;
 }
 .center {
   flex: 1;
-  background-color: yellow;
+    display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .outputs {
   position: relative;
   justify-content: space-evenly;
   display: flex;
   flex-direction: column;
-  background-color: rgb(255, 16, 16);
   width: 10px;
 }
 .box {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
   user-select: none;
   display: flex;
   flex-direction: row;
-  background-color: #304455;
   width: 100px;
   height: 100px;
   margin: 10px;

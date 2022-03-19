@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PropType, defineProps } from "vue";
 import { NodeInput } from "./lib/NodeInput";
-import {store} from "./store"
+import { store } from "./store"
 const props = defineProps({
   input: Object as PropType<NodeInput>,
 });
@@ -9,10 +9,11 @@ const props = defineProps({
 </script>
 
 <template>
-  <div  v-bind:id="`node-${input?.node.id}-input-${input?.id}`" class="input">
+  <div v-bind:id="`node-${input?.node.id}-input-${input?.id}`" class="input">
     <div class="input-name" v-if="input?.node.id == store.selectedNodeId">
       {{ input?.name }}({{ input?.getValue() }})
-      <div  class="dont-drag-me-father input-draggable output-drop-target "></div>
+      <div class="dont-drag-me-father input-draggable-ivisible output-drop-target"></div>
+      <div class="dont-drag-me-father input-draggable "></div>
     </div>
   </div>
 </template>
@@ -33,6 +34,19 @@ const props = defineProps({
 .input-name {
   margin-right: 20px;
   line-height: 10px;
+}
+.input-draggable-ivisible {
+  position: absolute !important;
+  left: -10px;
+  top: -10px;
+  opacity: 0.0;
+  direction: rtl;
+  display: block;
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: black;
 }
 .input-draggable {
   position: absolute !important;

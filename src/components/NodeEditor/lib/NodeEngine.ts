@@ -48,6 +48,7 @@ export class NodeEngine {
       let node = new (resolveType(n))(n.name);
       node.setId(String(n.id))
       node.updateCoordinates(n.x, n.y);
+      // node.setImage(n.image);
       node.outputs.forEach((o, i) => {
         o.name = n.outputs[i].name
         o.id = n.outputs[i].id

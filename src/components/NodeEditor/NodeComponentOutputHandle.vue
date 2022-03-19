@@ -49,6 +49,7 @@ function stop(e: any) {
 
 <template>
   <div class="hello">
+    <div class="output-droppable-invisible" ref="lineStart"></div>
     <div class="output-droppable" ref="lineStart"></div>
     <Draggable
       @move="onControlledDrag"
@@ -85,6 +86,7 @@ function stop(e: any) {
 .invisible {
   opacity: 0.5;
 }
+
 .output-droppable {
   position: absolute;
   left: 0px;
@@ -97,6 +99,7 @@ function stop(e: any) {
   border-radius: 50%;
   background-color: black;
 }
+
 .input-draggable {
   position: absolute !important;
   left: 0px;

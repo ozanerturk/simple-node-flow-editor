@@ -18,6 +18,8 @@ export class Engine extends Node {
     this.inputs.push(this.powerInput);
     this.outputs.push(this.powerOutput);
     this.parameters.push(this.tolerance)
+    //get random machine image from internet
+    this.image = "https://picsum.photos/100/100/?random";
   }
 
   public override execution(): void {

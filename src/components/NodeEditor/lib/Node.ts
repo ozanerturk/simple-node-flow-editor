@@ -8,8 +8,12 @@ export interface INode {
   onExecuted: (nodeOutput: NodeOutput) => void;
 }
 export class Node implements INode {
+  setImage(image: string) {
+    this.image = image;
+  }
   serialize(): any {
     return {
+      image : this.image,
       x: this.x,
       y: this.y,
       initialX:this.x,
@@ -29,6 +33,7 @@ export class Node implements INode {
   public x: number = 0;
   public y: number = 0;
   public id: string;
+  public image:string ="";
 
   constructor (name: string) {
     this.name = name
